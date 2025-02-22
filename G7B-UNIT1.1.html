@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>大龙课堂中英文配对</title>
+    <style>
+        body {
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            width: 100%;
+        }
+        .left-container, .right-container {
+            flex: 1;
+            min-width: 300px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .word-box {
+            width: 100%;
+            height: 80px;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+            transition: background-color 0.3s;
+        }
+        .english {
+            background-color: #4CAF50;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .chinese {
+            background-color: #2196F3;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .hidden {
+            display: none;
+        }
+        .result {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 20px;
+            color: #333;
+            display: none;
+        }
+        .selected {
+            background-color: #505050 !important;
+        }
+    </style>
+</head>
+<body>
+    <h1>大龙课堂中英文配对
+    G7B-UNIT1.1</h1>
+
+    <div class="container">
+        <div class="left-container" id="left-container"></div>
+        <div class="right-container" id="right-container"></div>
+    </div>
+    <div id="uneditable">这是不可编辑的文本</div>
+    <script>
+    document.getElementById('uneditable').addEventListener('copy', function(e) {
+        e.preventDefault(); // 阻止复制操作
+    });
+    document.getElementById('uneditable').addEventListener('cut', function(e) {
+        e.preventDefault(); // 阻止剪切操作
+    });
+    document.getElementById('uneditable').addEventListener('paste', function(e) {
+        e.preventDefault(); // 阻止粘贴操作
+    });
+        const wordPairs = [
+            { english: 'musician', chinese: '音乐家;作曲家' },
+            { english: 'playlist', chinese: '音乐播放清单' },
+            { english: 'video', chinese: '音乐短片;视频' },
+            { english: 'download', chinese: '下载' },
+            { english: 'folk', chinese: '民间音乐' },
+            { english: 'classical', chinese: '古典的;经典的' },
+            { english: 'theme', chinese: '乐曲的）主题,主旋律' },
+            { english: 'beauty', chinese: '美;美丽' },
+            { english: 'lyrics', chinese: '（pl.）歌词' },
+            { english: 'jasmine', chinese: ' 茉莉' },
+            { english: 'rock', chinese: '摇滚乐1' },
+            { english: 'pop', chinese: '流行音乐' },
+            { english: 'title', chinese: '（乐曲等的）名称,标题,题目' },
+            { english: 'popularity', chinese: '流行' },
+            { english: 'unknown', chinese: '不出名的;无名的' },
+            { english: 'well-known', chinese: '众所周知的' },
+            { english: 'best-known', chinese: '最知名的' },
+            { english: 'melody', chinese: '旋律;曲调' },
+            { english: 'both … and …', chinese: '不仅…而且…' },
+            { english: 'preference', chinese: '偏爱;偏好' },
+            { english: 'chorus', chinese: '合唱团;歌唱队' },
+            { english: 'charity', chinese: '慈善' },
+            { english: 'choose', chinese: '选择;挑选' },
+            { english: 'actually', chinese: '的确;真实地;事实上' },
+            { english: 'raise', chinese: '提升，筹集' },
+            { english: 'homeless', chinese: '无家的' }
+        ];
+        let selected = null;
+        let matchedPairs = 0;
+        let errorCount = 0;
+        let startTime = null;
+        const leftContainer = document.getElementById('left-container');
+        const rightContainer = document.getElementById('right-container');
+        const result = document.getElementById('result');
+        function createBoxes() {
+            leftContainer.innerHTML = '';
+            rightContainer.innerHTML = '';
+            // 打乱顺序
+            const englishWords = [...wordPairs].sort(() => Math.random() - 0.5).map(pair => pair.english);
+            const chineseWords = [...wordPairs].sort(() => Math.random() - 0.5).map(pair => pair.chinese);
+            // 创建英文单词框
+            englishWords.forEach(word => {
+                const box = document.createElement('div');
+                box.className = 'word-box english';
+                box.textContent = word;
+                box.addEventListener('click', handleClick);
+                leftContainer.appendChild(box);
+            });
+            // 创建中文单词框
+            chineseWords.forEach(word => {
+                const box = document.createElement('div');
+                box.className = 'word-box chinese';
+                box.textContent = word;
+                box.addEventListener('click', handleClick);
+                rightContainer.appendChild(box);
+            });
+        }
+        function handleClick() {
+            if (selected === null) {
+                // 第一次点击，选择英文或中文
+                if (this.className.includes('english')) {
+                    selected = this;
+                    selected.classList.add('selected');
+                }
+            } else {
+                // 第二次点击，检查匹配
+                if (this.className.includes('chinese')) {
+                    const pair = wordPairs.find(p =>
+                        (selected.textContent === p.english && this.textContent === p.chinese) ||
+                        (selected.textContent === p.chinese && this.textContent === p.english)
+                    );
+                    if (pair) {
+                        // 匹配成功，隐藏两个方块
+                        selected.classList.add('hidden');
+                        this.classList.add('hidden');
+                        matchedPairs++;
+                        selected = null;
+                        if (matchedPairs === wordPairs.length) {
+                            showResult();
+                        }
+                    } else {
+                        // 匹配失败，恢复颜色
+                        errorCount++;
+                        selected.classList.remove('selected');
+                        selected = null;
+                    }
+                }
+                selected = null;
+            }
+            if (startTime === null) {
+                startTime = new Date();
+            }
+        }
+        function showResult() {
+            const endTime = new Date();
+            const duration = Math.floor((endTime - startTime) / 1000);
+            const message = `恭喜你挑战成功！请截图发给大龙老师！
+                            错误次数：${errorCount}
+                            完成时间：${endTime.toLocaleString()}
+                            花费时间：${duration} 秒`;
+            result.textContent = message;
+            result.style.display = 'block';
+        }
+        createBoxes();
+    </script>
+</body>
+</html>
